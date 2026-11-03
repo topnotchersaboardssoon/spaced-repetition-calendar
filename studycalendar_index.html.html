@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memorise — Spaced Repetition Study Calendar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#2563eb',
+              600: '#1d4ed8',
+              700: '#1e40af',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.7);
+    }
+  </style>
+</head>
+<body class="bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="border-b border-stone-200 dark:border-stone-800 bg-white/80 dark:bg-stone-900/80 backdrop-blur sticky top-0 z-30 px-4 sm:px-6 py-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+      
+      <!-- Brand & Stats -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+          🧠
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2">
+            Memorise
+            <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 dark:border-brand-900">Spaced Repetition</span>
+          </h1>
+          <p class="text-xs text-stone-500 dark:text-stone-400 hidden sm:block">Master anything with scientifically spaced reviews</p>
+        </div>
+      </div>
+
+      <!-- Action Utilities -->
+      <div class="flex items-center gap-2">
+        <!-- All Topics Library Button -->
+        <button onclick="openModal('topicsLibraryModal')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-200 text-xs sm:text-sm font-semibold transition active:scale-95">
+          <svg class="w-4 h-4 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <span>All Topics</span>
+        </button>
+
+        <!-- New Topic Button -->
+        <button onclick="openModal('addTopicModal')" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-white dark:bg-stone-100 dark:hover:bg-white dark:text-stone-900 text-xs sm:text-sm font-semibold shadow-sm transition active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <span>New Topic</span>
+        </button>
+
+        <!-- Notification Toggle Button -->
+        <button id="notifyBtn" onclick="toggleNotifications()" title="Notifications settings" class="p-2 rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 transition">
+          <svg id="bellIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+        </button>
+
+        <!-- Backup Data Modal Trigger -->
+        <button onclick="openModal('backupModal')" title="Backup & Restore Data" class="p-2 rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+        </button>
+
+        <!-- Dark/Light Mode Switcher -->
+        <button onclick="toggleDarkMode()" title="Toggle Theme" class="p-2 rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 transition">
+          <svg class="w-4 h-4 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+          <svg class="w-4 h-4 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- NOTIFICATION BANNER (When Due Today) -->
+  <div id="dueNoticeBanner" class="hidden bg-amber-50 dark:bg-amber-950/60 border-b border-amber-200 dark:border-amber-900/60 px-4 py-2.5 text-xs sm:text-sm text-amber-800 dark:text-amber-300">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="flex h-2 w-2 relative">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+        </span>
+        <span id="dueNoticeText" class="font-medium">You have reviews due today!</span>
+      </div>
+      <button onclick="scrollToDueSection()" class="underline font-semibold hover:text-amber-900 dark:hover:text-amber-200">
+        Review Now &darr;
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN APPLICATION CONTENT -->
+  <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex-1 flex flex-col gap-6">
+
+    <!-- METRICS STRIP -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-3.5 sm:p-4 shadow-sm cursor-pointer hover:border-brand-300 transition" onclick="scrollToDueSection()">
+        <div class="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Due Today</div>
+        <div class="text-2xl font-bold mt-1 text-brand-600 dark:text-brand-400" id="statDueToday">0</div>
+        <div class="text-[11px] text-stone-400 mt-0.5">Scheduled for today &darr;</div>
+      </div>
+      <div class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-3.5 sm:p-4 shadow-sm cursor-pointer hover:border-brand-300 transition" onclick="openModal('topicsLibraryModal')">
+        <div class="flex items-center justify-between">
+          <div class="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Total Topics</div>
+          <span class="text-[10px] text-brand-600 dark:text-brand-400 font-semibold underline">Manage</span>
+        </div>
+        <div class="text-2xl font-bold mt-1 text-stone-800 dark:text-stone-200" id="statTotalTopics">0</div>
+        <div class="text-[11px] text-stone-400 mt-0.5">Click to view all &rarr;</div>
+      </div>
+      <div class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-3.5 sm:p-4 shadow-sm">
+        <div class="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Total Topics</div>
+        <div class="text-2xl font-bold mt-1 text-stone-800 dark:text-stone-200" id="statTotalTopics">0</div>
+        <div class="text-[11px] text-stone-400 mt-0.5">Active curriculum</div>
+      </div>
+      <div class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-3.5 sm:p-4 shadow-sm">
+        <div class="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Completed Reviews</div>
+        <div class="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400" id="statCompletedReviews">0</div>
+        <div class="text-[11px] text-stone-400 mt-0.5">Total recall sessions</div>
+      </div>
+      <div class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-3.5 sm:p-4 shadow-sm">
+        <div class="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Retention Streak</div>
+        <div class="text-2xl font-bold mt-1 text-amber-500 dark:text-amber-400" id="statStreak">0 days 🔥</div>
+        <div class="text-[11px] text-stone-400 mt-0.5">Consistent reviews</div>
+      </div>
+    </section>
+
+    <!-- TWO-COLUMN WORKSPACE: TODAY'S FOCUS & CALENDAR -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- LEFT: TODAY'S REVIEWS FOCUS PANEL (5 Cols on LG) -->
+      <section id="dueSection" class="lg:col-span-5 flex flex-col gap-4">
+        <div class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-5 shadow-sm">
+          
+          <div class="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3 mb-4">
+            <div>
+              <h2 class="font-bold text-base tracking-tight flex items-center gap-2">
+                <span>🎯 Today's Due Repetitions</span>
+              </h2>
+              <p class="text-xs text-stone-500 dark:text-stone-400" id="todayHumanDate">Loading date...</p>
+            </div>
+            <span id="dueBadgeCount" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
+              0 due
+            </span>
+          </div>
+
+          <!-- Empty State -->
+          <div id="emptyDueContainer" class="hidden py-10 flex flex-col items-center justify-center text-center">
+            <div class="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl mb-3">
+              ✓
+            </div>
+            <h3 class="font-semibold text-sm">All caught up for today!</h3>
+            <p class="text-xs text-stone-500 dark:text-stone-400 max-w-xs mt-1">
+              Your brain has retained everything due today. Add a new topic or inspect past and upcoming days on the calendar.
+            </p>
+            <button onclick="openModal('addTopicModal')" class="mt-4 text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline">
+              + Review a new topic today
+            </button>
+          </div>
+
+          <!-- Due List Container -->
+          <div id="dueListContainer" class="flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-1">
+            <!-- Injected dynamically via JS -->
+          </div>
+
+        </div>
+
+        <!-- QUICK INTERVAL REFERENCE CHEAT SHEET -->
+        <div class="bg-stone-100/60 dark:bg-stone-900/60 border border-stone-200 dark:border-stone-800 rounded-xl p-4 text-xs">
+          <div class="font-semibold text-stone-700 dark:text-stone-300 mb-2 flex items-center justify-between">
+            <span>Interval Curve Presets</span>
+            <span class="text-[10px] text-stone-500 uppercase tracking-wider">Ebbinghaus Curve</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5 text-[11px]">
+            <span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900 font-mono">Stage 1: +1d</span>
+            <span class="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900 font-mono">Stage 2: +3d</span>
+            <span class="px-2 py-0.5 rounded bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-900 font-mono">Stage 3: +7d</span>
+            <span class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900 font-mono">Stage 4: +14d</span>
+            <span class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900 font-mono">Stage 5: +30d</span>
+            <span class="px-2 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-900 font-mono">Stage 6: +60d</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: INTERACTIVE MONTHLY CALENDAR (7 Cols on LG) -->
+      <section class="lg:col-span-7 flex flex-col gap-4">
+        <div class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-5 shadow-sm">
+          
+          <!-- Calendar Header Controls -->
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <h2 id="calendarMonthYear" class="font-bold text-base sm:text-lg tracking-tight">Month Year</h2>
+              <button onclick="goToCurrentMonth()" class="text-xs px-2 py-0.5 rounded-md border border-stone-200 dark:border-stone-800 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300">
+                Today
+              </button>
+            </div>
+            
+            <div class="flex items-center gap-1">
+              <button onclick="changeMonth(-1)" class="p-1.5 rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 transition" title="Previous Month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <button onclick="changeMonth(1)" class="p-1.5 rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 transition" title="Next Month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Weekday Labels -->
+          <div class="grid grid-cols-7 gap-1 text-center font-medium text-xs text-stone-400 dark:text-stone-500 mb-1">
+            <div>Sun</div>
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+          </div>
+
+          <!-- Calendar Grid Cells -->
+          <div id="calendarGrid" class="grid grid-cols-7 gap-1">
+            <!-- Calendar Days will be generated by JS -->
+          </div>
+
+          <!-- Calendar Legend & Filter Summary -->
+          <div class="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500 dark:text-stone-400">
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-brand-500 inline-block"></span> Scheduled</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Done</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Overdue</span>
+            </div>
+            <span>Click any day to inspect</span>
+          </div>
+
+        </div>
+
+        <!-- SELECTED DATE INSPECTOR DRAWER -->
+        <div id="inspectorPanel" class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-5 shadow-sm scroll-mt-20">
+          <div class="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3 mb-3">
+            <div>
+              <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+                <span>🗓️ Reviews on Selected Date:</span>
+                <span id="inspectorDateLabel" class="text-brand-600 dark:text-brand-400 font-semibold">Today</span>
+              </h3>
+              <p class="text-[11px] text-stone-400" id="inspectorSubtitle">Click any date on the calendar to switch inspection.</p>
+            </div>
+            <button onclick="scheduleTopicForSelectedDate()" class="text-xs px-2.5 py-1.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900/60 text-brand-600 dark:text-brand-300 border border-brand-200 dark:border-brand-800 transition font-medium">
+              + New Topic Here
+            </button>
+          </div>
+
+          <div id="inspectorItemsList" class="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
+            <!-- Day items rendered by JS -->
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- MODAL: ALL TOPICS / MASTER DECK LIBRARY -->
+  <div id="topicsLibraryModal" class="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl flex flex-col max-h-[90vh]">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3 mb-4">
+        <div>
+          <h3 class="font-bold text-lg flex items-center gap-2">
+            <span>📚 All Topics Deck</span>
+            <span id="libraryTotalBadge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300">0 Topics</span>
+          </h3>
+          <p class="text-xs text-stone-400">Search, edit, inspect review progress, or delete topics from your curriculum.</p>
+        </div>
+        <button onclick="closeModal('topicsLibraryModal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 text-2xl font-light">&times;</button>
+      </div>
+
+      <!-- Filters & Search Toolbar -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4">
+        <div class="relative flex-1">
+          <input type="text" id="librarySearchInput" oninput="renderTopicsLibrary()" placeholder="Search by topic name, formula, or notes..." class="w-full text-xs sm:text-sm pl-8 pr-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <svg class="w-4 h-4 text-stone-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <select id="libraryCategoryFilter" onchange="renderTopicsLibrary()" class="text-xs py-2 px-2.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus:outline-none">
+            <option value="ALL">All Subjects</option>
+          </select>
+          <select id="librarySortFilter" onchange="renderTopicsLibrary()" class="text-xs py-2 px-2.5 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus:outline-none">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="alpha">Alphabetical</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Topics List Content -->
+      <div id="topicsLibraryList" class="flex-1 overflow-y-auto pr-1 flex flex-col gap-2.5 min-h-[250px]">
+        <!-- Injected via renderTopicsLibrary() -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: ADD NEW TOPIC -->
+  <div id="addTopicModal" class="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-lg">Add New Study Topic</h3>
+        <button onclick="closeModal('addTopicModal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 text-lg">&times;</button>
+      </div>
+
+      <form onsubmit="handleCreateTopic(event)" class="flex flex-col gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">Topic / Concept Name *</label>
+          <input type="text" id="topicNameInput" required placeholder="e.g. Nervous System Action Potentials" class="w-full text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">Subject / Category</label>
+            <input type="text" id="topicCategoryInput" placeholder="e.g. Biology, CS, History" class="w-full text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">Color Tag</label>
+            <div class="flex items-center gap-2 pt-1">
+              <label class="cursor-pointer"><input type="radio" name="colorTag" value="blue" checked class="sr-only peer"><span class="w-6 h-6 rounded-full bg-blue-500 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-stone-900 dark:peer-checked:ring-stone-100 inline-block"></span></label>
+              <label class="cursor-pointer"><input type="radio" name="colorTag" value="emerald" class="sr-only peer"><span class="w-6 h-6 rounded-full bg-emerald-500 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-stone-900 dark:peer-checked:ring-stone-100 inline-block"></span></label>
+              <label class="cursor-pointer"><input type="radio" name="colorTag" value="purple" class="sr-only peer"><span class="w-6 h-6 rounded-full bg-purple-500 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-stone-900 dark:peer-checked:ring-stone-100 inline-block"></span></label>
+              <label class="cursor-pointer"><input type="radio" name="colorTag" value="amber" class="sr-only peer"><span class="w-6 h-6 rounded-full bg-amber-500 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-stone-900 dark:peer-checked:ring-stone-100 inline-block"></span></label>
+              <label class="cursor-pointer"><input type="radio" name="colorTag" value="rose" class="sr-only peer"><span class="w-6 h-6 rounded-full bg-rose-500 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-stone-900 dark:peer-checked:ring-stone-100 inline-block"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">First Learned Date</label>
+            <input type="date" id="topicStartDateInput" required class="w-full text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">Repetition Schedule Preset</label>
+            <select id="topicIntervalPreset" class="w-full text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+              <option value="standard">Standard (+1, +3, +7, +14, +30, +60)</option>
+              <option value="intensive">Intensive (+1, +2, +4, +7, +15, +30)</option>
+              <option value="light">Light (+2, +5, +12, +25, +50)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1">Quick Notes / Key Formulas (Optional)</label>
+          <textarea id="topicNotesInput" rows="2" placeholder="Formulas, key concepts to test yourself on..." class="w-full text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-100 dark:border-stone-800">
+          <button type="button" onclick="closeModal('addTopicModal')" class="px-4 py-2 text-xs font-semibold rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-brand-600 hover:bg-brand-700 text-white shadow-sm">
+            Schedule Repetitions
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: BACKUP, EXPORT & IMPORT -->
+  <div id="backupModal" class="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-lg">Backup & Data Portability</h3>
+        <button onclick="closeModal('backupModal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 text-lg">&times;</button>
+      </div>
+
+      <p class="text-xs text-stone-500 dark:text-stone-400 mb-4 leading-relaxed">
+        All your spaced repetition study records are saved directly in your browser's offline storage. You can export a snapshot backup to transfer between devices or keep your study history safe.
+      </p>
+
+      <div class="flex flex-col gap-3">
+        <button onclick="exportDataJSON()" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-semibold rounded-lg bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 hover:opacity-90 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Export Backup (.JSON)
+        </button>
+
+        <label class="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-semibold rounded-lg border border-stone-300 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <span>Import Existing Backup (.JSON)</span>
+          <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importDataJSON(event)">
+        </label>
+
+        <button onclick="resetSampleData()" class="w-full text-center py-2 text-xs text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 hover:underline">
+          Load Sample Curriculum
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NOTIFICATIONS SETTINGS -->
+  <div id="notifySettingsModal" class="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-bold text-base">Study Notifications</h3>
+        <button onclick="closeModal('notifySettingsModal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 text-lg">&times;</button>
+      </div>
+
+      <p class="text-xs text-stone-500 dark:text-stone-400 mb-4">
+        Get an automatic browser reminder when review cards are due so you never break your retention curve.
+      </p>
+
+      <div class="space-y-3">
+        <div class="flex items-center justify-between p-3 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
+          <div>
+            <div class="text-xs font-semibold">Web Notifications</div>
+            <div class="text-[11px] text-stone-400" id="notificationStatusText">Permission status</div>
+          </div>
+          <button id="reqPermBtn" onclick="requestNotificationPermission()" class="text-xs px-2.5 py-1 font-semibold rounded bg-brand-600 text-white hover:bg-brand-700">
+            Enable
+          </button>
+        </div>
+
+        <div class="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700">
+          <label class="text-xs font-semibold block mb-1">Daily Study Alarm Time</label>
+          <div class="flex items-center gap-2">
+            <input type="time" id="dailyReminderTime" value="09:00" class="text-xs p-1.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800">
+            <button onclick="saveReminderTime()" class="text-xs px-2.5 py-1 rounded bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 font-semibold">Save</button>
+          </div>
+          <span class="text-[10px] text-stone-400 block mt-1">Triggers while app or tab is active.</span>
+        </div>
+
+        <button onclick="testNotificationChime()" class="w-full text-center text-xs text-brand-600 dark:text-brand-400 hover:underline py-1 font-medium">
+          🔔 Test Chime & Banner
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    /* ==========================================================================
+       STORAGE & DATA MODELS
+       ========================================================================== */
+    const STORAGE_KEY = 'spaced_repetition_study_data_v1';
+    const NOTIFY_TIME_KEY = 'spaced_repetition_notify_time_v1';
+
+    // Interval Schedules in days
+    const SCHEDULE_PRESETS = {
+      standard: [1, 3, 7, 14, 30, 60],
+      intensive: [1, 2, 4, 7, 15, 30],
+      light: [2, 5, 12, 25, 50]
+    };
+
+    let appData = {
+      topics: [],
+      // review item structure: { id, topicId, dueDate: 'YYYY-MM-DD', intervalIndex: 0, intervalDays: 1, status: 'pending'|'completed', completedAt: null, rating: null }
+      reviews: [],
+      streakCount: 0,
+      lastStreakDate: null
+    };
+
+    let currentCalendarDate = new Date();
+    let selectedInspectorDate = getTodayKey();
+
+    /* ==========================================================================
+       SOUND CHIME (Web Audio API - completely offline without assets)
+       ========================================================================== */
+    function playChime(type = 'success') {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        if (type === 'success') {
+          // Cheerful chime: C5 -> E5 -> G5
+          const notes = [523.25, 659.25, 783.99];
+          notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
+            gain.gain.setValueAtTime(0.001, ctx.currentTime + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + i * 0.08 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + i * 0.08);
+            osc.stop(ctx.currentTime + i * 0.08 + 0.36);
+          });
+        } else if (type === 'bell') {
+          // Single focus chime
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          gain.gain.setValueAtTime(0.25, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.85);
+        }
+      } catch (err) {
+        console.warn('Audio Context disabled or not supported', err);
+      }
+    }
+
+    /* ==========================================================================
+       DATE HELPERS
+       ========================================================================== */
+    function getTodayKey() {
+      const now = new Date();
+      return formatDateKey(now);
+    }
+
+    function formatDateKey(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseDateKey(keyStr) {
+      const [y, m, d] = keyStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function addDaysToDateKey(baseKey, days) {
+      const d = parseDateKey(baseKey);
+      d.setDate(d.getDate() + days);
+      return formatDateKey(d);
+    }
+
+    function formatHumanReadable(keyStr) {
+      const d = parseDateKey(keyStr);
+      return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    /* ==========================================================================
+       CORE SPACED REPETITION ENGINE
+       ========================================================================== */
+    function scheduleTopic(topicName, category, color, startDateKey, presetName, notes) {
+      const topicId = 't_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      const intervals = SCHEDULE_PRESETS[presetName] || SCHEDULE_PRESETS.standard;
+
+      const newTopic = {
+        id: topicId,
+        name: topicName,
+        category: category || 'General',
+        color: color || 'blue',
+        startDate: startDateKey,
+        preset: presetName,
+        notes: notes || '',
+        createdAt: new Date().toISOString()
+      };
+
+      appData.topics.push(newTopic);
+
+      // Generate the spaced repetition intervals
+      intervals.forEach((intervalDays, index) => {
+        const reviewDueDate = addDaysToDateKey(startDateKey, intervalDays);
+        appData.reviews.push({
+          id: 'rev_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 4),
+          topicId: topicId,
+          dueDate: reviewDueDate,
+          intervalIndex: index + 1,
+          intervalDays: intervalDays,
+          status: 'pending',
+          completedAt: null,
+          rating: null
+        });
+      });
+
+      saveData();
+      renderAll();
+      playChime('success');
+    }
+
+    // Dynamic rating (SM-2 style option: Again / Hard / Good / Easy)
+    function completeReviewWithRating(reviewId, rating = 'good') {
+      const review = appData.reviews.find(r => r.id === reviewId);
+      if (!review) return;
+
+      review.status = 'completed';
+      review.completedAt = new Date().toISOString();
+      review.rating = rating;
+
+      const today = getTodayKey();
+      updateStreak(today);
+
+      // Rescheduling intelligence based on recall rating
+      if (rating === 'again') {
+        // Needs immediate review tomorrow
+        const nextReviewDate = addDaysToDateKey(today, 1);
+        appData.reviews.push({
+          id: 'rev_' + Date.now() + '_retest',
+          topicId: review.topicId,
+          dueDate: nextReviewDate,
+          intervalIndex: review.intervalIndex,
+          intervalDays: 1,
+          status: 'pending',
+          completedAt: null,
+          rating: null
+        });
+      } else if (rating === 'hard') {
+        // Shortened interval (+2 days)
+        const nextReviewDate = addDaysToDateKey(today, 2);
+        appData.reviews.push({
+          id: 'rev_' + Date.now() + '_hard',
+          topicId: review.topicId,
+          dueDate: nextReviewDate,
+          intervalIndex: review.intervalIndex + 1,
+          intervalDays: 2,
+          status: 'pending',
+          completedAt: null,
+          rating: null
+        });
+      }
+
+      saveData();
+      renderAll();
+      playChime('success');
+    }
+
+    function postponeReview(reviewId, days = 1) {
+      const review = appData.reviews.find(r => r.id === reviewId);
+      if (!review) return;
+      review.dueDate = addDaysToDateKey(review.dueDate, days);
+      saveData();
+      renderAll();
+    }
+
+    function deleteReview(reviewId) {
+      appData.reviews = appData.reviews.filter(r => r.id !== reviewId);
+      saveData();
+      renderAll();
+    }
+
+    function deleteTopicEntirely(topicId) {
+      if (confirm('Are you sure you want to delete this topic and all its scheduled repetitions?')) {
+        appData.topics = appData.topics.filter(t => t.id !== topicId);
+        appData.reviews = appData.reviews.filter(r => r.topicId !== topicId);
+        saveData();
+        renderAll();
+      }
+    }
+
+    function updateStreak(todayKey) {
+      if (!appData.lastStreakDate) {
+        appData.streakCount = 1;
+        appData.lastStreakDate = todayKey;
+      } else {
+        const last = parseDateKey(appData.lastStreakDate);
+        const today = parseDateKey(todayKey);
+        const diffDays = Math.round((today - last) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+          appData.streakCount += 1;
+          appData.lastStreakDate = todayKey;
+        } else if (diffDays > 1) {
+          appData.streakCount = 1;
+          appData.lastStreakDate = todayKey;
+        }
+      }
+    }
+
+    /* ==========================================================================
+       RENDERING: METRICS, DUE TODAY & CALENDAR
+       ========================================================================== */
+    function renderAll() {
+      renderMetrics();
+      renderTodayDue();
+      renderCalendar();
+      renderInspector(selectedInspectorDate);
+      checkDailyNotifications();
+    }
+
+    function renderMetrics() {
+      const today = getTodayKey();
+      const dueCount = appData.reviews.filter(r => r.status === 'pending' && r.dueDate <= today).length;
+      const completedCount = appData.reviews.filter(r => r.status === 'completed').length;
+
+      document.getElementById('statDueToday').innerText = dueCount;
+      document.getElementById('statTotalTopics').innerText = appData.topics.length;
+      document.getElementById('statCompletedReviews').innerText = completedCount;
+      document.getElementById('statStreak').innerText = `${appData.streakCount || 0} days 🔥`;
+
+      // Top banner
+      const banner = document.getElementById('dueNoticeBanner');
+      const bannerText = document.getElementById('dueNoticeText');
+      if (dueCount > 0) {
+        banner.classList.remove('hidden');
+        bannerText.innerText = `You have ${dueCount} spaced repetition review${dueCount > 1 ? 's' : ''} due today!`;
+      } else {
+        banner.classList.add('hidden');
+      }
+
+      // Update topics library modal badge & filters
+      updateCategoryFilterOptions();
+    }
+
+    function renderTodayDue() {
+      const today = getTodayKey();
+      document.getElementById('todayHumanDate').innerText = formatHumanReadable(today);
+
+      const dueReviews = appData.reviews.filter(r => r.status === 'pending' && r.dueDate <= today);
+      const container = document.getElementById('dueListContainer');
+      const emptyState = document.getElementById('emptyDueContainer');
+      const badgeCount = document.getElementById('dueBadgeCount');
+
+      badgeCount.innerText = `${dueReviews.length} due`;
+      container.innerHTML = '';
+
+      if (dueReviews.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      dueReviews.forEach(rev => {
+        const topic = appData.topics.find(t => t.id === rev.topicId) || { name: 'Unknown Topic', category: 'General', color: 'blue', notes: '' };
+        const isOverdue = rev.dueDate < today;
+
+        const card = document.createElement('div');
+        card.className = "p-3.5 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/70 dark:bg-stone-800/40 flex flex-col gap-2.5 transition hover:shadow-sm";
+
+        // Color badge classes
+        const colorClasses = getColorTagClasses(topic.color);
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${colorClasses}">
+                  ${topic.category}
+                </span>
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300">
+                  Stage ${rev.intervalIndex} (+${rev.intervalDays}d)
+                </span>
+                ${isOverdue ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">Overdue</span>' : ''}
+              </div>
+              <h4 class="font-semibold text-sm mt-1 text-stone-900 dark:text-stone-100">${escapeHtml(topic.name)}</h4>
+              ${topic.notes ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-2">${escapeHtml(topic.notes)}</p>` : ''}
+            </div>
+            
+            <div class="flex items-center gap-1">
+              <button onclick="postponeReview('${rev.id}', 1)" title="Postpone 1 day" class="p-1 rounded text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 dark:hover:bg-stone-700">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Difficulty Rating Buttons -->
+          <div class="pt-2 border-t border-stone-200/60 dark:border-stone-700/60 flex items-center justify-between gap-1 flex-wrap">
+            <span class="text-[11px] font-medium text-stone-400">Recall rating:</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="completeReviewWithRating('${rev.id}', 'again')" class="text-xs px-2 py-1 rounded bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-950 dark:hover:bg-rose-900 dark:text-rose-300 font-medium transition" title="Couldn't remember. Repeat tomorrow">
+                Again
+              </button>
+              <button onclick="completeReviewWithRating('${rev.id}', 'hard')" class="text-xs px-2 py-1 rounded bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-950 dark:hover:bg-amber-900 dark:text-amber-300 font-medium transition" title="Remembered with difficulty">
+                Hard
+              </button>
+              <button onclick="completeReviewWithRating('${rev.id}', 'good')" class="text-xs px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition" title="Normal recall">
+                Good ✓
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderCalendar() {
+      const year = currentCalendarDate.getFullYear();
+      const month = currentCalendarDate.getMonth();
+      const todayKey = getTodayKey();
+
+      const monthName = currentCalendarDate.toLocaleString('default', { month: 'long' });
+      document.getElementById('calendarMonthYear').innerText = `${monthName} ${year}`;
+
+      const firstDayOfMonth = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const prevMonthDays = new Date(year, month, 0).getDate();
+
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+
+      // Previous month placeholder days
+      for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+        const dayNum = prevMonthDays - i;
+        const cell = document.createElement('div');
+        cell.className = 'h-16 sm:h-20 p-1 rounded-lg border border-transparent text-stone-300 dark:text-stone-700 select-none text-[11px]';
+        cell.innerHTML = `<span>${dayNum}</span>`;
+        grid.appendChild(cell);
+      }
+
+      // Current month days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayDate = new Date(year, month, day);
+        const dayKey = formatDateKey(dayDate);
+        const isToday = dayKey === todayKey;
+        const isSelected = dayKey === selectedInspectorDate;
+
+        // Find reviews matching this date
+        const dayReviews = appData.reviews.filter(r => r.dueDate === dayKey);
+        const pendingCount = dayReviews.filter(r => r.status === 'pending').length;
+        const completedCount = dayReviews.filter(r => r.status === 'completed').length;
+        const isOverdue = dayKey < todayKey && pendingCount > 0;
+
+        const cell = document.createElement('div');
+        let baseClass = 'h-16 sm:h-20 p-1.5 rounded-xl border flex flex-col justify-between cursor-pointer transition relative ';
+        
+        if (isSelected) {
+          baseClass += 'ring-2 ring-brand-500 bg-brand-50/50 dark:bg-brand-950/30 border-brand-300 dark:border-brand-800 ';
+        } else if (isToday) {
+          baseClass += 'bg-stone-100 dark:bg-stone-800/80 border-stone-300 dark:border-stone-700 ';
+        } else {
+          baseClass += 'bg-white dark:bg-stone-900/60 border-stone-200 dark:border-stone-800 hover:border-brand-300 dark:hover:border-stone-700 ';
+        }
+
+        cell.className = baseClass;
+        cell.onclick = () => selectDate(dayKey);
+
+        // Day header with badges
+        let dotsHtml = '';
+        if (dayReviews.length > 0) {
+          dotsHtml = '<div class="flex items-center gap-1 mt-1 flex-wrap">';
+          if (pendingCount > 0) {
+            dotsHtml += `<span class="w-2 h-2 rounded-full ${isOverdue ? 'bg-rose-500' : 'bg-brand-500'}" title="${pendingCount} pending"></span>`;
+          }
+          if (completedCount > 0) {
+            dotsHtml += `<span class="w-2 h-2 rounded-full bg-emerald-500" title="${completedCount} completed"></span>`;
+          }
+          dotsHtml += '</div>';
+        }
+
+        cell.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold ${isToday ? 'px-1.5 py-0.5 rounded-full bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900' : 'text-stone-700 dark:text-stone-300'}">${day}</span>
+            ${dayReviews.length > 0 ? `<span class="text-[10px] font-mono ${pendingCount > 0 ? (isOverdue ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-brand-600 dark:text-brand-400 font-bold') : 'text-stone-400'}">${dayReviews.length}</span>` : ''}
+          </div>
+          ${dotsHtml}
+        `;
+
+        grid.appendChild(cell);
+      }
+    }
+
+    function selectDate(dateKey) {
+      selectedInspectorDate = dateKey;
+      renderCalendar();
+      renderInspector(dateKey);
+      // Smooth scroll directly to the inspector if on mobile
+      if (window.innerWidth < 1024) {
+        document.getElementById('inspectorPanel').scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function renderInspector(dateKey) {
+      document.getElementById('inspectorDateLabel').innerText = formatHumanReadable(dateKey);
+      const list = document.getElementById('inspectorItemsList');
+      list.innerHTML = '';
+
+      const reviewsForDay = appData.reviews.filter(r => r.dueDate === dateKey);
+      const today = getTodayKey();
+
+      if (reviewsForDay.length === 0) {
+        list.innerHTML = `
+          <div class="py-8 text-center text-xs text-stone-400 dark:text-stone-500 flex flex-col items-center justify-center">
+            <span class="text-2xl mb-1">🍃</span>
+            <span>No repetitions scheduled on this date.</span>
+            <button onclick="scheduleTopicForSelectedDate()" class="mt-2 text-brand-600 dark:text-brand-400 font-medium hover:underline">Schedule a study session here &rarr;</button>
+          </div>
+        `;
+        return;
+      }
+
+      reviewsForDay.forEach(rev => {
+        const topic = appData.topics.find(t => t.id === rev.topicId) || { name: 'Unknown', category: 'General', color: 'blue' };
+        const isDone = rev.status === 'completed';
+        const isOverdue = !isDone && rev.dueDate < today;
+
+        const row = document.createElement('div');
+        row.className = `p-3 rounded-xl border ${isDone ? 'border-emerald-200 dark:border-emerald-950 bg-emerald-50/30 dark:bg-emerald-950/20' : (isOverdue ? 'border-rose-200 dark:border-rose-950/60 bg-rose-50/20 dark:bg-rose-950/20' : 'border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/40')} flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs`;
+
+        row.innerHTML = `
+          <div class="flex items-start gap-2.5 overflow-hidden flex-1">
+            <button onclick="toggleReviewDone('${rev.id}')" title="Mark completed" class="mt-0.5 w-4 h-4 rounded border flex items-center justify-center font-bold transition flex-shrink-0 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-stone-300 dark:border-stone-600 hover:border-brand-500'}">
+              ${isDone ? '✓' : ''}
+            </button>
+            <div class="truncate flex-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-semibold ${isDone ? 'line-through text-stone-400' : 'text-stone-800 dark:text-stone-200'}">${escapeHtml(topic.name)}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-medium ${getColorTagClasses(topic.color)}">${escapeHtml(topic.category)}</span>
+              </div>
+              <div class="text-[11px] text-stone-400 flex items-center gap-1.5 mt-0.5">
+                <span>Stage ${rev.intervalIndex} (+${rev.intervalDays}d)</span>
+                <span>•</span>
+                <span>Status: <strong class="${isDone ? 'text-emerald-600 dark:text-emerald-400' : (isOverdue ? 'text-rose-500' : 'text-amber-600')}">${isDone ? 'Completed' : (isOverdue ? 'Overdue' : 'Due')}</strong></span>
+                ${rev.rating ? `<span>• Recall: ${rev.rating}</span>` : ''}
+              </div>
+              ${topic.notes ? `<p class="text-[11px] text-stone-500 dark:text-stone-400 mt-1 italic">"${escapeHtml(topic.notes)}"</p>` : ''}
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1 self-end sm:self-center">
+            ${!isDone ? `
+              <button onclick="completeReviewWithRating('${rev.id}', 'good')" class="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold">
+                Mark Done
+              </button>
+            ` : ''}
+            <button onclick="deleteReview('${rev.id}')" title="Remove this interval" class="p-1.5 text-stone-400 hover:text-rose-500 transition rounded hover:bg-stone-100 dark:hover:bg-stone-800">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    /* ==========================================================================
+       ALL TOPICS (MASTER DECK) LIBRARY IMPLEMENTATION
+       ========================================================================== */
+    function updateCategoryFilterOptions() {
+      const select = document.getElementById('libraryCategoryFilter');
+      if (!select) return;
+      const currentVal = select.value;
+
+      const categories = Array.from(new Set(appData.topics.map(t => t.category || 'General')));
+      select.innerHTML = '<option value="ALL">All Subjects</option>';
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.innerText = cat;
+        select.appendChild(opt);
+      });
+      select.value = categories.includes(currentVal) ? currentVal : 'ALL';
+    }
+
+    function renderTopicsLibrary() {
+      const query = (document.getElementById('librarySearchInput').value || '').toLowerCase().trim();
+      const catFilter = document.getElementById('libraryCategoryFilter').value;
+      const sortFilter = document.getElementById('librarySortFilter').value;
+      const listContainer = document.getElementById('topicsLibraryList');
+      const badge = document.getElementById('libraryTotalBadge');
+
+      badge.innerText = `${appData.topics.length} Topic${appData.topics.length === 1 ? '' : 's'}`;
+      listContainer.innerHTML = '';
+
+      let filtered = [...appData.topics].filter(t => {
+        const matchesQuery = !query || t.name.toLowerCase().includes(query) || (t.notes && t.notes.toLowerCase().includes(query)) || t.category.toLowerCase().includes(query);
+        const matchesCat = catFilter === 'ALL' || t.category === catFilter;
+        return matchesQuery && matchesCat;
+      });
+
+      // Sorting
+      if (sortFilter === 'newest') {
+        filtered.sort((a, b) => new Date(b.createdAt || b.startDate) - new Date(a.createdAt || a.startDate));
+      } else if (sortFilter === 'oldest') {
+        filtered.sort((a, b) => new Date(a.createdAt || a.startDate) - new Date(b.createdAt || b.startDate));
+      } else if (sortFilter === 'alpha') {
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = `
+          <div class="py-12 text-center text-xs text-stone-400">
+            No topics found matching your criteria.
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(topic => {
+        const topicReviews = appData.reviews.filter(r => r.topicId === topic.id);
+        const completedReviews = topicReviews.filter(r => r.status === 'completed');
+        const nextPendingReview = topicReviews.filter(r => r.status === 'pending').sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
+        const progressPercent = topicReviews.length > 0 ? Math.round((completedReviews.length / topicReviews.length) * 100) : 0;
+
+        const card = document.createElement('div');
+        card.className = "p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50/60 dark:bg-stone-800/40 hover:bg-white dark:hover:bg-stone-800 transition flex flex-col gap-2.5";
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${getColorTagClasses(topic.color)}">${escapeHtml(topic.category)}</span>
+                <span class="text-[11px] text-stone-400">Learned: ${topic.startDate}</span>
+                <span class="text-[11px] text-stone-400">• Preset: ${topic.preset || 'standard'}</span>
+              </div>
+              <h4 class="font-bold text-sm sm:text-base text-stone-900 dark:text-stone-100 mt-1">${escapeHtml(topic.name)}</h4>
+              ${topic.notes ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-1">${escapeHtml(topic.notes)}</p>` : ''}
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <button onclick="promptEditTopic('${topic.id}')" title="Edit topic notes" class="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded hover:bg-stone-200 dark:hover:bg-stone-700 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+              <button onclick="deleteTopicEntirely('${topic.id}')" title="Delete topic and reviews" class="p-1.5 text-stone-400 hover:text-rose-500 rounded hover:bg-rose-50 dark:hover:bg-rose-950/50 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Progress Bar & Next Due -->
+          <div class="pt-2 border-t border-stone-100 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2 flex-1">
+              <div class="w-full sm:w-32 bg-stone-200 dark:bg-stone-700 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-brand-500 h-full rounded-full" style="width: ${progressPercent}%"></div>
+              </div>
+              <span class="text-[11px] font-mono text-stone-500">${completedReviews.length}/${topicReviews.length} (${progressPercent}%)</span>
+            </div>
+
+            <div class="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1.5">
+              ${nextPendingReview 
+                ? `<span>Next repetition: <strong class="text-stone-800 dark:text-stone-200">${nextPendingReview.dueDate}</strong> (Stage ${nextPendingReview.intervalIndex})</span>`
+                : `<span class="text-emerald-600 dark:text-emerald-400 font-semibold">All intervals mastered! 🎉</span>`
+              }
+            </div>
+          </div>
+        `;
+        listContainer.appendChild(card);
+      });
+    }
+
+    function promptEditTopic(topicId) {
+      const topic = appData.topics.find(t => t.id === topicId);
+      if (!topic) return;
+
+      const newName = prompt('Edit Topic Name:', topic.name);
+      if (newName === null) return;
+      const newCategory = prompt('Edit Subject / Category:', topic.category || '');
+      const newNotes = prompt('Edit Key Notes / Formulas:', topic.notes || '');
+
+      if (newName.trim()) topic.name = newName.trim();
+      if (newCategory !== null) topic.category = newCategory.trim() || 'General';
+      if (newNotes !== null) topic.notes = newNotes.trim();
+
+      saveData();
+      renderAll();
+      renderTopicsLibrary();
+    }
+
+    function toggleReviewDone(reviewId) {
+      const review = appData.reviews.find(r => r.id === reviewId);
+      if (!review) return;
+      if (review.status === 'completed') {
+        review.status = 'pending';
+        review.completedAt = null;
+      } else {
+        review.status = 'completed';
+        review.completedAt = new Date().toISOString();
+        playChime('success');
+      }
+      saveData();
+      renderAll();
+    }
+
+    function scheduleTopicForSelectedDate() {
+      document.getElementById('topicStartDateInput').value = selectedInspectorDate;
+      openModal('addTopicModal');
+    }
+
+    /* ==========================================================================
+       TOPIC CREATION & MODAL CONTROLS
+       ========================================================================== */
+    function handleCreateTopic(e) {
+      e.preventDefault();
+      const name = document.getElementById('topicNameInput').value.trim();
+      const category = document.getElementById('topicCategoryInput').value.trim();
+      const startDate = document.getElementById('topicStartDateInput').value;
+      const preset = document.getElementById('topicIntervalPreset').value;
+      const notes = document.getElementById('topicNotesInput').value.trim();
+      
+      const colorRadio = document.querySelector('input[name="colorTag"]:checked');
+      const color = colorRadio ? colorRadio.value : 'blue';
+
+      if (!name || !startDate) return;
+
+      scheduleTopic(name, category, color, startDate, preset, notes);
+      closeModal('addTopicModal');
+      e.target.reset();
+      document.getElementById('topicStartDateInput').value = getTodayKey();
+    }
+
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+        if (id === 'topicsLibraryModal') {
+          renderTopicsLibrary();
+        }
+      }
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+      }
+    }
+
+    function changeMonth(delta) {
+      currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function goToCurrentMonth() {
+      currentCalendarDate = new Date();
+      selectedInspectorDate = getTodayKey();
+      renderCalendar();
+      renderInspector(selectedInspectorDate);
+    }
+
+    function scrollToDueSection() {
+      document.getElementById('dueSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function getColorTagClasses(color) {
+      switch(color) {
+        case 'emerald': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        case 'purple': return 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300';
+        case 'amber': return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+        case 'rose': return 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300';
+        default: return 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    /* ==========================================================================
+       NOTIFICATIONS API INTEGRATION
+       ========================================================================== */
+    function toggleNotifications() {
+      updateNotificationStatusUI();
+      openModal('notifySettingsModal');
+    }
+
+    function updateNotificationStatusUI() {
+      const statusLabel = document.getElementById('notificationStatusText');
+      const reqBtn = document.getElementById('reqPermBtn');
+      const savedTime = localStorage.getItem(NOTIFY_TIME_KEY) || '09:00';
+      document.getElementById('dailyReminderTime').value = savedTime;
+
+      if (!('Notification' in window)) {
+        statusLabel.innerText = 'Not supported in this browser';
+        reqBtn.classList.add('hidden');
+        return;
+      }
+
+      if (Notification.permission === 'granted') {
+        statusLabel.innerText = 'Status: Active / Allowed ✓';
+        reqBtn.innerText = 'Granted';
+        reqBtn.disabled = true;
+        reqBtn.classList.replace('bg-brand-600', 'bg-emerald-600');
+      } else if (Notification.permission === 'denied') {
+        statusLabel.innerText = 'Status: Blocked in browser settings';
+        reqBtn.innerText = 'Blocked';
+        reqBtn.disabled = true;
+      } else {
+        statusLabel.innerText = 'Status: Not enabled yet';
+        reqBtn.innerText = 'Enable';
+        reqBtn.disabled = false;
+      }
+    }
+
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) return;
+      const perm = await Notification.requestPermission();
+      updateNotificationStatusUI();
+      if (perm === 'granted') {
+        new Notification('Memorise Spaced Repetition', {
+          body: 'Study reminders enabled! We will alert you when intervals are due.',
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🧠</text></svg>'
+        });
+      }
+    }
+
+    function saveReminderTime() {
+      const timeVal = document.getElementById('dailyReminderTime').value;
+      localStorage.setItem(NOTIFY_TIME_KEY, timeVal);
+      alert(`Daily reminder time saved: ${timeVal}`);
+      closeModal('notifySettingsModal');
+    }
+
+    function testNotificationChime() {
+      playChime('bell');
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Study Reminder Test 🧠', {
+          body: 'Your spaced repetition session is ready!',
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🧠</text></svg>'
+        });
+      }
+    }
+
+    function checkDailyNotifications() {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+      const now = new Date();
+      const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const savedTime = localStorage.getItem(NOTIFY_TIME_KEY) || '09:00';
+      const lastNotifiedKey = 'last_notified_' + getTodayKey();
+
+      if (currentTimeStr === savedTime && !sessionStorage.getItem(lastNotifiedKey)) {
+        const today = getTodayKey();
+        const dueCount = appData.reviews.filter(r => r.status === 'pending' && r.dueDate <= today).length;
+        if (dueCount > 0) {
+          playChime('bell');
+          new Notification('Study Session Due! 🎯', {
+            body: `You have ${dueCount} spaced repetition topics scheduled for review today.`,
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🧠</text></svg>'
+          });
+          sessionStorage.setItem(lastNotifiedKey, 'true');
+        }
+      }
+    }
+
+    // Periodic check every 60 seconds
+    setInterval(checkDailyNotifications, 60000);
+
+    /* ==========================================================================
+       LOCALSTORAGE & IMPORT/EXPORT LOGIC
+       ========================================================================== */
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    }
+
+    function loadData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try {
+          appData = JSON.parse(raw);
+        } catch (e) {
+          console.error('Failed to parse study data', e);
+          loadSampleData();
+        }
+      } else {
+        loadSampleData();
+      }
+    }
+
+    function exportDataJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `memorise_backup_${getTodayKey()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importDataJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.topics && parsed.reviews) {
+            appData = parsed;
+            saveData();
+            renderAll();
+            closeModal('backupModal');
+            alert('Backup successfully imported!');
+          } else {
+            alert('Invalid backup file format.');
+          }
+        } catch (err) {
+          alert('Could not parse JSON backup file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function loadSampleData() {
+      const today = getTodayKey();
+      const yesterday = addDaysToDateKey(today, -1);
+      const threeDaysAgo = addDaysToDateKey(today, -3);
+
+      appData = {
+        topics: [
+          {
+            id: 'top_1',
+            name: 'Cellular Respiration & ATP Synthase',
+            category: 'Biology',
+            color: 'emerald',
+            startDate: yesterday,
+            preset: 'standard',
+            notes: 'Remember the role of proton gradient in mitochondrial inner membrane.',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 'top_2',
+            name: 'TCP/IP Handshake & Packet Framing',
+            category: 'Computer Science',
+            color: 'blue',
+            startDate: threeDaysAgo,
+            preset: 'standard',
+            notes: 'SYN, SYN-ACK, ACK sequence.',
+            createdAt: new Date().toISOString()
+          }
+        ],
+        reviews: [
+          // Review 1 is due today (+1 day from yesterday)
+          {
+            id: 'rev_sample_1',
+            topicId: 'top_1',
+            dueDate: today,
+            intervalIndex: 1,
+            intervalDays: 1,
+            status: 'pending',
+            completedAt: null,
+            rating: null
+          },
+          // Review 2 is due today (+3 days from 3 days ago)
+          {
+            id: 'rev_sample_2',
+            topicId: 'top_2',
+            dueDate: today,
+            intervalIndex: 2,
+            intervalDays: 3,
+            status: 'pending',
+            completedAt: null,
+            rating: null
+          },
+          // Future reviews
+          {
+            id: 'rev_sample_3',
+            topicId: 'top_1',
+            dueDate: addDaysToDateKey(today, 2),
+            intervalIndex: 2,
+            intervalDays: 3,
+            status: 'pending',
+            completedAt: null,
+            rating: null
+          },
+          {
+            id: 'rev_sample_4',
+            topicId: 'top_2',
+            dueDate: addDaysToDateKey(today, 4),
+            intervalIndex: 3,
+            intervalDays: 7,
+            status: 'pending',
+            completedAt: null,
+            rating: null
+          }
+        ],
+        streakCount: 3,
+        lastStreakDate: yesterday
+      };
+      saveData();
+    }
+
+    function resetSampleData() {
+      if (confirm('Load sample curriculum? Current data will be replaced.')) {
+        loadSampleData();
+        renderAll();
+        closeModal('backupModal');
+      }
+    }
+
+    /* ==========================================================================
+       THEME CONTROLLER
+       ========================================================================== */
+    function initTheme() {
+      if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+
+    function toggleDarkMode() {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    /* ==========================================================================
+       INITIALIZATION
+       ========================================================================== */
+    window.onload = function() {
+      initTheme();
+      loadData();
+      document.getElementById('topicStartDateInput').value = getTodayKey();
+      renderAll();
+    };
+  </script>
+</body>
+</html>
